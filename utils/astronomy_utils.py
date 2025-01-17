@@ -1,18 +1,27 @@
 # astronomy_utils.py
 
-from skyfield.api import load
+from datetime import datetime
+from skyfield.api import Star
+from utils.global_resources import get_timescale, get_ephemeris
 
 
-def get_star_data(constellation, date):
-    ts = load.timescale()
-    t = ts.utc(int(date.split('-')[0]), int(date.split('-')[1]), int(date.split('-')[2]))
-    eph = load('de421.bsp')
+def get_constellation_details(constellation_name, date_str):
+    ts = get_timescale()
+    eph = get_ephemeris()
+    t = ts.utc(datetime.strptime(date_str, '%Y-%m-%d'))
+
     observer = eph['earth']
 
-    # 별자리 데이터 예시
-    star_data = [
-        {"name": "Betelgeuse", "pitch": 60, "duration": 480},
-        {"name": "Rigel", "pitch": 64, "duration": 240},
-        {"name": "Bellatrix", "pitch": 67, "duration": 360},
-    ]
-    return star_data
+    # Betelgeuse 별의 예시 위치 사용
+    star = Star(ra_hours=22, dec_degrees=-13)
+    astrometric = observer.at(t).observe(star)
+    ra, dec, distance = astrometric.radec()
+
+    return {
+        "name": constellation_name,
+        "position": {
+            "right_ascension": f"{ra.hours:.2f}h",
+            "declination": f"{dec.degrees:.2f}°"
+        },
+        "distance_from_earth": f"{distance.au:.2f} AU",
+    }
